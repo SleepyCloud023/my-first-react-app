@@ -1,55 +1,56 @@
-import React from "react";
+import React, { useCallback, useContext, useEffect } from 'react';
+import { UserDispatch } from './App';
 
-export function InputForm({username, email, onChange, onCreate}) {
-  return(
-    <>
-      <input 
-        name="username" 
-        placeholder="이름" 
-        value={username}
-        onChange={onChange}
-      />
-      <input 
-        name="email" 
-        placeholder="이메일" 
-        value={email}
-        onChange={onChange}
-      />
-      <button onClick={onCreate}>등록</button>
-    </>
-  )
-}
+const User = React.memo(function User({ user }) {
+  const { id, username, email, active } = user;
+  const dispatch = useContext(UserDispatch);
 
-export function User({user, onRemove, onToggle}) {
-  const {id, username, email, active} = user;
-  console.log(`USER Element ${id} rendered`);
-  return(
+  const onRemove = useCallback(() => {
+    dispatch({ type: 'REMOVE', id });
+  }, [dispatch, id]);
+
+  const onToggle = useCallback(() => {
+    dispatch({ type: 'TOGGLE', id });
+  }, [dispatch, id]);
+
+  useEffect(() => {
+    console.log(`USER Element ${id} rendered`);
+    return () => {
+      console.log(`USER Element ${id} disappear`);
+    };
+  }, [id]);
+
+  return (
     <div>
-      <b 
+      <b
         style={{
           color: active ? 'orange' : 'black',
-          cursor: 'pointer'
+          cursor: 'pointer',
         }}
-        onClick={()=>onToggle(id)}
+        onClick={onToggle}
       >
         User-{id}: {username}
       </b>
       &nbsp;
       <span>({email})</span>
-      <button onClick={()=>onRemove(id)}>삭제</button>
+      <button onClick={onRemove}>삭제</button>
     </div>
-  )
-}
+  );
+});
 
-export function UserList({users, onRemove, onToggle}) {
-  return(
+function UserList({ users }) {
+  return (
     <div>
-      {users.map((user)=> <User 
-                            key= {user.id} 
-                            user={user} 
-                            onRemove={onRemove}
-                            onToggle={onToggle}
-                            />)}
+      {users.map((user) => (
+        <User key={user.id} user={user} />
+      ))}
     </div>
   );
 }
+
+// 두번째 인자인 propsAreEqual의 반환값이 true이면
+//  UserList를 다시 계산하지 않음
+export default React.memo(
+  UserList,
+  (prevProps, nextProps) => prevProps.users === nextProps.users,
+);
